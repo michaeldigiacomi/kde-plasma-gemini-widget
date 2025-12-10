@@ -1,0 +1,28 @@
+name: Publish Plasmoid
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Archive Plasmoid
+        run: |
+          # Exclude git files and other non-distribution files
+          zip -r kde-plasma-gemini-widget.plasmoid . -x "*.git*" -x ".github/*" -x "LINKEDIN_POST.md" -x "icon.png"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: kde-plasma-gemini-widget.plasmoid
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -40,6 +40,14 @@ A KDE Plasma desktop widget (Plasmoid) that allows you to interact with Google G
 
 3.  **Update**: If you are updating an existing version, use `--upgrade` instead of `--install`.
 
+### Optional: Install Icon
+To use the included custom icon:
+```bash
+mkdir -p ~/.local/share/icons/hicolor/128x128/apps/
+cp google-gemini.png ~/.local/share/icons/hicolor/128x128/apps/google-gemini.png
+gtk-update-icon-cache ~/.local/share/icons/hicolor/
+```
+
 ## Configuration
 
 1.  **Get an API Key**: Visit [Google AI Studio](https://aistudio.google.com/app/apikey) to generate a free API key.
