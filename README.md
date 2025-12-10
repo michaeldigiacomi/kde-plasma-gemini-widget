@@ -11,6 +11,12 @@ A KDE Plasma desktop widget (Plasmoid) that allows you to interact with Google G
 *   **Configurable:** Set your own API key and choose your preferred Gemini model.
 *   **History:** Maintains conversation context within the current session.
 
+## Screenshots
+
+|                  Chat Interface                   |                 Chat History                  |                  Configuration                  |
+| :-----------------------------------------------: | :-------------------------------------------: | :---------------------------------------------: |
+| ![Chat Interface](screenshots/chat_interface.png) | ![Chat History](screenshots/chat_history.png) | ![Configuration](screenshots/configuration.png) |
+
 ## Installation
 
 ### Prerequisites
