@@ -1,0 +1,21 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Michael Di Giacomi",
+                "Email": "mdigiac1@icloud.com"
+            }
+        ],
+        "Name": "Gemini Desktop",
+        "Description": "Interact with Google Gemini directly from your desktop",
+        "Icon": "google-gemini",
+        "Id": "com.mdigiacomi.gemini",
+        "Version": "1.1",
+        "Website": "https://gemini.google.com",
+        "Category": "Utilities",
+        "License": "GPL v2+",
+        "EnabledByDefault": true
+    }
+}
