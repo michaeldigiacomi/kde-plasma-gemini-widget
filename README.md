@@ -78,5 +78,5 @@ gtk-update-icon-cache ~/.local/share/icons/hicolor/
 
 ## License
 
-GPL v2+
+MIT
 
