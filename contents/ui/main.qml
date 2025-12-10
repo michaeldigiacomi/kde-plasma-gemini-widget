@@ -222,7 +222,10 @@ PlasmoidItem {
                         Label {
                             id: msgText
                             anchors.centerIn: parent
-                            width: Math.min(implicitWidth, parent.parent.width * 0.8 - (Kirigami.Units.largeSpacing * 2))
+                            // Calculate max width available for text: Bubble Max Width - Padding
+                            // Bubble Max Width is 80% of View Width.
+                            property real maxTextWidth: (chatView.width * 0.8) - (Kirigami.Units.largeSpacing * 2)
+                            width: Math.min(implicitWidth, maxTextWidth)
                             
                             text: model.text
                             color: {
@@ -232,8 +235,7 @@ PlasmoidItem {
                             wrapMode: Text.Wrap
                             textFormat: Text.MarkdownText
                             
-                            // Adjust padding via anchors in the parent rectangle slightly effectively
-                            // But cleaner is just to let the Rect size itself.
+                            onLinkActivated: Qt.openUrlExternally(link)
                         }
 
                         MouseArea {
@@ -278,9 +280,11 @@ PlasmoidItem {
             }
 
             // Input Area
+            // Input Area
             Rectangle {
                 Layout.fillWidth: true
-                height: inputRow.implicitHeight + Kirigami.Units.largeSpacing
+                implicitHeight: inputRow.implicitHeight + Kirigami.Units.largeSpacing
+                
                 color: Kirigami.Theme.backgroundColor
                 opacity: 0.8
                 
@@ -294,12 +298,15 @@ PlasmoidItem {
 
                 RowLayout {
                     id: inputRow
-                    anchors.fill: parent
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
                     anchors.margins: Kirigami.Units.smallSpacing
                     
                     ScrollView {
                         Layout.fillWidth: true
-                        Layout.maximumHeight: Kirigami.Units.gridUnit * 4
+                        // Grow with text, but cap at 4 units (approx 4 lines)
+                        Layout.preferredHeight: Math.min(inputField.implicitHeight, Kirigami.Units.gridUnit * 4)
                         
                         TextArea {
                             id: inputField
@@ -308,6 +315,9 @@ PlasmoidItem {
                             wrapMode: Text.Wrap
                             color: Kirigami.Theme.textColor
                             
+                            // Force width to match parent to ensure wrapping works
+                            width: parent.width
+
                             // Capture enter key to send, shift+enter for new line
                             Keys.onPressed: (event) => {
                                 if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
