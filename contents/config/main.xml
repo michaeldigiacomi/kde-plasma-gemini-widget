@@ -13,5 +13,13 @@
             <label>Gemini Model Name</label>
             <default>gemini-1.5-flash</default>
         </entry>
+        <entry name="backend" type="Int">
+            <label>AI Backend</label>
+            <default>0</default>
+        </entry>
+        <entry name="ollamaUrl" type="String">
+            <label>Ollama URL</label>
+            <default>http://localhost:11434</default>
+        </entry>
     </group>
 </kcfg>

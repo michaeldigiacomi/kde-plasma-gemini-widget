@@ -1,6 +1,26 @@
 {
     "KPackageStructure": "Plasma/Applet",
     "X-Plasma-API-Minimum-Version": "6.0",
+    "config": {
+        "General": {
+            "apiKey": {
+                "type": "string",
+                "default": ""
+            },
+            "modelName": {
+                "type": "string",
+                "default": "gemini-pro"
+            },
+            "backend": {
+                "type": "integer",
+                "default": 0
+            },
+            "ollamaUrl": {
+                "type": "string",
+                "default": "http://localhost:11434"
+            }
+        }
+    },
     "KPlugin": {
         "Authors": [
             {

@@ -1,5 +1,5 @@
-
 .pragma library
+    .import "../code/HttpClient.js" as Http
 
 function generateContent(apiKey, modelName, chatHistory, newPrompt, callback) {
     if (!apiKey) {
@@ -14,55 +14,35 @@ function generateContent(apiKey, modelName, chatHistory, newPrompt, callback) {
     var url = "https://generativelanguage.googleapis.com/v1beta/models/" + modelName + ":generateContent?key=" + apiKey;
 
     // Construct the contents array from history + new prompt
-    // History format assumed: [{role: "user"|"model", parts: [{text: "..."}]}]
     var contents = [];
-
     for (var i = 0; i < chatHistory.length; i++) {
         contents.push({
             role: chatHistory[i].role,
             parts: [{ text: chatHistory[i].text }]
         });
     }
-
-    // Add the new prompt
     contents.push({
         role: "user",
         parts: [{ text: newPrompt }]
     });
 
-    var request = new XMLHttpRequest();
-    request.open("POST", url);
-    request.setRequestHeader("Content-Type", "application/json");
+    var requestBody = { contents: contents };
 
-    request.onreadystatechange = function () {
-        if (request.readyState === XMLHttpRequest.DONE) {
-            if (request.status === 200) {
-                try {
-                    var response = JSON.parse(request.responseText);
-                    var text = "";
-                    if (response.candidates && response.candidates.length > 0 &&
-                        response.candidates[0].content &&
-                        response.candidates[0].content.parts &&
-                        response.candidates[0].content.parts.length > 0) {
-                        text = response.candidates[0].content.parts[0].text;
-                        callback({ success: true, text: text });
-                    } else {
-                        callback({ error: "No content generated." });
-                    }
-                } catch (e) {
-                    callback({ error: "Failed to parse response: " + e.message });
-                }
+    Http.post(url, requestBody, function (response) {
+        if (response.error) {
+            callback({ error: response.error });
+        } else {
+            var data = response.data;
+            if (data.candidates && data.candidates.length > 0 &&
+                data.candidates[0].content &&
+                data.candidates[0].content.parts &&
+                data.candidates[0].content.parts.length > 0) {
+                callback({ success: true, text: data.candidates[0].content.parts[0].text });
             } else {
-                callback({ error: "API Error " + request.status + ": " + request.responseText });
+                callback({ error: "No content generated." });
             }
         }
-    }
-
-    var requestBody = {
-        contents: contents
-    };
-
-    request.send(JSON.stringify(requestBody));
+    });
 }
 
 function getModels(apiKey, callback) {
@@ -72,41 +52,26 @@ function getModels(apiKey, callback) {
     }
 
     var url = "https://generativelanguage.googleapis.com/v1beta/models?key=" + apiKey;
-    var request = new XMLHttpRequest();
-    request.open("GET", url);
 
-    request.onreadystatechange = function () {
-        if (request.readyState === XMLHttpRequest.DONE) {
-            if (request.status === 200) {
-                try {
-                    var response = JSON.parse(request.responseText);
-                    var modelList = [];
-                    if (response.models) {
-                        for (var i = 0; i < response.models.length; i++) {
-                            var m = response.models[i];
-                            // Filter for generateContent supported models if possible, but for now just list them
-                            // The names are like "models/gemini-pro". We usually just want the logical name or the full resource name.
-                            // The previous default was "gemini-pro". The API expects just the name part often or the full resource name.
-                            // Let's store the full name but display a friendly name if needed.
-                            // Actually the current code creates the URL as ".../models/" + modelName. 
-                            // If modelName is "gemini-pro", URL is ".../models/gemini-pro...".
-                            // If API returns "models/gemini-pro", passing that would make ".../models/models/gemini-pro".
-                            // So we should strip "models/" prefix.
-                            var name = m.name;
-                            if (name.startsWith("models/")) {
-                                name = name.substring(7);
-                            }
-                            modelList.push(name);
-                        }
+    Http.get(url, function (response) {
+        if (response.error) {
+            callback({ error: response.error });
+        } else {
+            var modelList = [];
+            var models = response.data.models || [];
+            for (var i = 0; i < models.length; i++) {
+                var m = models[i];
+                // Filter to models that support generateContent
+                if (m.supportedGenerationMethods &&
+                    m.supportedGenerationMethods.indexOf("generateContent") !== -1) {
+                    var name = m.name;
+                    if (name.startsWith("models/")) {
+                        name = name.substring(7);
                     }
-                    callback({ success: true, models: modelList });
-                } catch (e) {
-                    callback({ error: "Failed to parse response: " + e.message });
+                    modelList.push(name);
                 }
-            } else {
-                callback({ error: "API Error " + request.status });
             }
+            callback({ success: true, models: modelList });
         }
-    }
-    request.send();
+    });
 }

@@ -2,11 +2,13 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import org.kde.plasma.plasmoid
-import org.kde.plasma.core as PlasmaCore
+import org.kde.plasma.plasma5support as Plasma5Support
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
 import "../code/GeminiService.js" as GeminiService
+import "../code/OllamaService.js" as OllamaService
 import "../code/ChatStorage.js" as ChatStorage
+import Qt.labs.platform as Platform
 
 PlasmoidItem {
     id: root
@@ -14,6 +16,27 @@ PlasmoidItem {
     TextEdit {
         id: clipboardHelper
         visible: false
+    }
+
+    Plasma5Support.DataSource {
+        id: executableDataSource
+        engine: "executable"
+        connectedSources: []
+        onSourceAdded: (source) => {
+            disconnectSource(source)
+        }
+    }
+
+    Platform.FileDialog {
+        id: saveFileDialog
+        visible: false
+        fileMode: Platform.FileDialog.SaveFile
+        title: "Export Chat"
+        defaultSuffix: "md"
+        nameFilters: ["Markdown files (*.md)", "All files (*)"]
+        onAccepted: {
+            root.exportChat(currentFile)
+        }
     }
     
     property var chatHistory: [] 
@@ -70,45 +93,31 @@ PlasmoidItem {
         }
     } 
 
-    function sendMessage() {
-        var text = inputField.text.trim();
-        if (text === "") return;
-        
-        var apiKey = Plasmoid.configuration.apiKey;
-        var modelName = Plasmoid.configuration.modelName;
-
-        if (!apiKey) {
-            chatModel.append({ role: "system", text: "Please configure your API Key in the widget settings (Right-click -> Configure Gemini Desktop)." });
-            return;
+    function exportChat(fileUrl) {
+        var content = "# " + currentTitle + "\\n\\n";
+        for (var i = 0; i < chatHistory.length; i++) {
+            var msg = chatHistory[i];
+            var role = msg.role === "user" ? "User" : "AI";
+            content += "## " + role + "\\n" + msg.text + "\\n\\n";
         }
 
-        // Initialize session if needed
-        if (currentSessionId === -1) {
-            var title = text.length > 20 ? text.substring(0, 20) + "..." : text;
-            currentSessionId = ChatStorage.createSession(title);
-            currentTitle = title;
-            refreshHistory(); // Refresh drawer list
+        var path = fileUrl.toString();
+        // Remove file:// scheme if present
+        if (path.indexOf("file://") === 0) {
+            path = path.substring(7);
         }
 
-        // Add user message
-        chatModel.append({ role: "user", text: text });
-        chatHistory.push({ role: "user", text: text });
-        ChatStorage.saveMessage(currentSessionId, "user", text);
+        // Clean path for shell usage (basic quote escape)
+        // Note: Ideally we want a safer way, but sh is what we have.
+        // We will single-quote the path.
         
-        inputField.text = "";
-        root.isLoading = true;
-
-        GeminiService.generateContent(apiKey, modelName, chatHistory, text, function(response) {
-            root.isLoading = false;
-            if (response.error) {
-                chatModel.append({ role: "system", text: "Error: " + response.error });
-            } else {
-                chatModel.append({ role: "model", text: response.text });
-                chatHistory.push({ role: "model", text: response.text });
-                ChatStorage.saveMessage(currentSessionId, "model", response.text);
-            }
-        });
+        // Base64 encode content to avoid shell escaping issues with the content itself
+        var b64Data = Qt.btoa(unescape(encodeURIComponent(content)));
+        
+        var cmd = "echo '" + b64Data + "' | base64 -d > '" + path + "'";
+        executableDataSource.connectSource(cmd);
     }
+ 
 
     // Default to full view (chat window)
     preferredRepresentation: fullRepresentation
@@ -158,6 +167,14 @@ PlasmoidItem {
                         elide: Text.ElideRight
                     }
                     
+                    Button {
+                        icon.name: "document-export"
+                        text: ""
+                        ToolTip.visible: hovered
+                        ToolTip.text: "Export Chat"
+                        onClicked: saveFileDialog.open()
+                    }
+
                     Button {
                         icon.name: "document-new"
                         text: ""
@@ -310,7 +327,7 @@ PlasmoidItem {
                         
                         TextArea {
                             id: inputField
-                            placeholderText: "Message Gemini..."
+                            placeholderText: Plasmoid.configuration.backend === 1 ? "Message Ollama..." : "Message Gemini..."
                             enabled: !root.isLoading
                             wrapMode: Text.Wrap
                             color: Kirigami.Theme.textColor
@@ -447,9 +464,16 @@ PlasmoidItem {
             
             var apiKey = Plasmoid.configuration.apiKey;
             var modelName = Plasmoid.configuration.modelName;
+            var backend = Plasmoid.configuration.backend;
+            var ollamaUrl = Plasmoid.configuration.ollamaUrl;
 
-            if (!apiKey) {
+            if (backend !== 1 && !apiKey) {
                 chatModel.append({ role: "system", text: "Please configure your API Key in the widget settings (Right-click -> Configure Gemini Desktop)." });
+                return;
+            }
+            
+            if (backend === 1 && !ollamaUrl) {
+                chatModel.append({ role: "system", text: "Please configure your Ollama URL in the widget settings." });
                 return;
             }
 
@@ -469,7 +493,13 @@ PlasmoidItem {
             inputField.text = "";
             root.isLoading = true;
 
-            GeminiService.generateContent(apiKey, modelName, chatHistory, text, function(response) {
+            if (backend === 1) {
+                OllamaService.generateContent(ollamaUrl, modelName, chatHistory, text, handleResponse);
+            } else {
+                GeminiService.generateContent(apiKey, modelName, chatHistory, text, handleResponse);
+            }
+            
+            function handleResponse(response) {
                 root.isLoading = false;
                 if (response.error) {
                     chatModel.append({ role: "system", text: "Error: " + response.error });
@@ -478,7 +508,7 @@ PlasmoidItem {
                     chatHistory.push({ role: "model", text: response.text });
                     ChatStorage.saveMessage(currentSessionId, "model", response.text);
                 }
-            });
+            }
         }
     }
 }

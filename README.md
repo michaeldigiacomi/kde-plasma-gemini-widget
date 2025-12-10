@@ -1,15 +1,17 @@
 # KDE Plasma Gemini Widget
 
-A KDE Plasma desktop widget (Plasmoid) that allows you to interact with Google Gemini AI directly from your desktop.
+A KDE Plasma desktop widget (Plasmoid) that allows you to interact with Google Gemini AI or a local Ollama instance directly from your desktop.
 
 ## Features
 
-*   **Direct Interaction:** Chat with Gemini directly from your desktop panel or desktop.
-*   **Dynamic Model Selection:** Automatically fetch and select available models associated with your API key (e.g., `gemini-1.5-flash`, `gemini-pro`).
+*   **Multiple AI Backends:** Choose between Google Gemini or a local Ollama instance.
+*   **Direct Interaction:** Chat with AI directly from your desktop panel or desktop.
+*   **Dynamic Model Selection:** Automatically fetch and select available models from your chosen backend.
 *   **Markdown Support:** Rich text rendering for code blocks, bullet points, and bold text.
-*   **Production Ready:** Includes copy-to-clipboard functionality and persistent chat history.
-*   **Configurable:** Set your own API key and choose your preferred Gemini model.
-*   **History:** Maintains conversation context within the current session.
+*   **Chat History:** Persistent chat history with session management (new chat, load previous chats).
+*   **Export:** Export your chat conversations to Markdown files.
+*   **Copy to Clipboard:** Right-click any message to copy its content.
+*   **Configurable:** Set your API key (Gemini) or server URL (Ollama) and choose your preferred model.
 
 ## Screenshots
 
@@ -23,6 +25,7 @@ A KDE Plasma desktop widget (Plasmoid) that allows you to interact with Google G
 
 *   KDE Plasma 5 or 6
 *   `kpackagetool5` (Plasma 5) or `kpackagetool6` (Plasma 6)
+*   For Ollama: A running [Ollama](https://ollama.ai) instance
 
 ### Install
 
@@ -56,14 +59,24 @@ gtk-update-icon-cache ~/.local/share/icons/hicolor/
 
 ## Configuration
 
-1.  **Get an API Key**: Visit [Google AI Studio](https://aistudio.google.com/app/apikey) to generate a free API key.
-2.  **Add Widget**: Right-click on your desktop or panel -> "Add Widgets..." -> Search for "Gemini Desktop".
-3.  **Configure**:
+1.  **Add Widget**: Right-click on your desktop or panel -> "Add Widgets..." -> Search for "Gemini Desktop".
+2.  **Configure**:
     *   Right-click the widget.
     *   Select "Configure Gemini Desktop...".
-    *   Paste your API Key.
-    *   (Optional) Click the "Refresh" button to fetch available models, or manually enter a model name.
+
+### For Google Gemini
+1.  **Get an API Key**: Visit [Google AI Studio](https://aistudio.google.com/app/apikey) to generate a free API key.
+2.  Select "Gemini" as the backend.
+3.  Paste your API Key.
+4.  (Optional) Click "Refresh" to fetch available models, or manually enter a model name.
+
+### For Ollama
+1.  Ensure Ollama is running locally (default: `http://localhost:11434`).
+2.  Select "Ollama" as the backend.
+3.  Enter your Ollama server URL if different from the default.
+4.  Click "Refresh" to fetch available models, or manually enter a model name (e.g., `llama3`, `gemma3:latest`).
 
 ## License
 
 GPL v2+
+
